@@ -1,0 +1,137 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Set Seaborn style for better aesthetics
+sns.set(style="whitegrid")
+
+# Load the dataset
+file_path = '/mnt/data/Unemployment_in_India[2].csv'  # Update with your actual file path
+data = pd.read_csv(file_path)
+
+# Clean column names by stripping leading/trailing spaces
+data.columns = data.columns.str.strip()
+
+# Display the first few rows of the dataset
+print("First 5 rows of the dataset:")
+print(data.head())
+
+# Basic statistics and information about the dataset
+print("\nDataset Information:")
+print(data.info())
+
+print("\nDescriptive Statistics:")
+print(data.describe())
+
+# Checking for missing values
+print("\nMissing Values in Each Column:")
+print(data.isnull().sum())
+
+# Handle missing values if any (example: drop rows with missing values)
+data.dropna(inplace=True)
+
+# Convert the 'Date' column to datetime format
+data['Date'] = pd.to_datetime(data['Date'])
+
+# Ensure numerical columns are of correct data type
+data['Estimated Unemployment Rate (%)'] = pd.to_numeric(data['Estimated Unemployment Rate (%)'], errors='coerce')
+data['Estimated Employed'] = pd.to_numeric(data['Estimated Employed'], errors='coerce')
+data['Estimated Labour Participation Rate (%)'] = pd.to_numeric(data['Estimated Labour Participation Rate (%)'], errors='coerce')
+
+# Drop rows with NaN values after conversion
+data.dropna(inplace=True)
+
+# --- 1. Unemployment Rate Trends by Region ---
+
+plt.figure(figsize=(14, 8))
+for region in data['Region'].unique():
+    region_data = data[data['Region'] == region]
+    plt.plot(region_data['Date'], region_data['Estimated Unemployment Rate (%)'], marker='o', label=region)
+
+plt.title('Unemployment Rate Over Time by Region')
+plt.xlabel('Date')
+plt.ylabel('Estimated Unemployment Rate (%)')
+plt.legend(title='Region')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+# --- 2. Correlation Analysis ---
+
+# Compute correlation matrix
+corr_matrix = data[['Estimated Unemployment Rate (%)', 'Estimated Labour Participation Rate (%)', 'Estimated Employed']].corr()
+print("\nCorrelation Matrix:")
+print(corr_matrix)
+
+# Plot the correlation matrix as a heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', fmt=".2f")
+plt.title('Correlation Heatmap')
+plt.show()
+
+# --- 3. Distribution of Unemployment Rates ---
+
+# Histogram
+plt.figure(figsize=(10, 6))
+sns.histplot(data['Estimated Unemployment Rate (%)'], bins=30, kde=True, color='skyblue')
+plt.title('Distribution of Unemployment Rates')
+plt.xlabel('Estimated Unemployment Rate (%)')
+plt.ylabel('Frequency')
+plt.show()
+
+# Box Plot by Region
+plt.figure(figsize=(14, 8))
+sns.boxplot(x='Region', y='Estimated Unemployment Rate (%)', data=data)
+plt.title('Unemployment Rate by Region')
+plt.xlabel('Region')
+plt.ylabel('Estimated Unemployment Rate (%)')
+plt.xticks(rotation=45)
+plt.show()
+
+# --- 4. Labour Participation vs. Unemployment Rate ---
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Estimated Labour Participation Rate (%)', y='Estimated Unemployment Rate (%)', hue='Region', data=data)
+plt.title('Labour Participation Rate vs. Unemployment Rate')
+plt.xlabel('Estimated Labour Participation Rate (%)')
+plt.ylabel('Estimated Unemployment Rate (%)')
+plt.legend(title='Region', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.show()
+
+# --- 5. Heatmap of Correlations ---
+
+# If you have more numerical variables, include them here
+numerical_cols = ['Estimated Unemployment Rate (%)', 'Estimated Labour Participation Rate (%)', 'Estimated Employed']
+corr_matrix_full = data[numerical_cols].corr()
+
+plt.figure(figsize=(8, 6))
+sns.heatmap(corr_matrix_full, annot=True, cmap='viridis', fmt=".2f")
+plt.title('Correlation Heatmap of Numerical Variables')
+plt.show()
+
+# --- 6. Top/Bottom Regions by Average Unemployment Rate ---
+
+# Calculate average unemployment rate per region
+avg_unemp_by_region = data.groupby('Region')['Estimated Unemployment Rate (%)'].mean().sort_values(ascending=False)
+print("\nAverage Unemployment Rate by Region:")
+print(avg_unemp_by_region)
+
+# Plotting average unemployment rates
+plt.figure(figsize=(14, 8))
+sns.barplot(x=avg_unemp_by_region.index, y=avg_unemp_by_region.values, palette='magma')
+plt.title('Average Unemployment Rate by Region')
+plt.xlabel('Region')
+plt.ylabel('Average Estimated Unemployment Rate (%)')
+plt.xticks(rotation=45)
+plt.show()
+
+# Identify Top 5 and Bottom 5 Regions
+top_5_regions = avg_unemp_by_region.head(5)
+bottom_5_regions = avg_unemp_by_region.tail(5)
+
+print("\nTop 5 Regions with Highest Average Unemployment Rate:")
+print(top_5_regions)
+
+print("\nTop 5 Regions with Lowest Average Unemployment Rate:")
+print(bottom_5_regions)
